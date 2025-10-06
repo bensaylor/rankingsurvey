@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Item Ranking Survey</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h2 {
+      margin-top: 40px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .bucket, .items {
+      border: 2px dashed #ccc;
+      padding: 10px;
+      width: 200px;
+      min-height: 100px;
+      background-color: #f9f9f9;
+    }
+    .bucket {
+      flex-grow: 1;
+    }
+    .item {
+      padding: 5px;
+      margin: 5px;
+      background-color: #e0e0ff;
+      cursor: grab;
+    }
+    input, button {
+      margin-top: 10px;
+      padding: 8px;
+      width: 300px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Item Ranking Survey</h1>
+  <label>Name: <input type="text" id="name" required></label><br>
+  <label>Email: <input type="email" id="email" required></label>
+
+  <h2>Drag items into the appropriate category (max 2 per category)</h2>
+  <div class="container">
+    <div class="items" id="items">
+      <div class="item" draggable="true">Apples</div>
+      <div class="item" draggable="true">Bananas</div>
+      <div class="item" draggable="true">Oranges</div>
+      <div class="item" draggable="true">Pears</div>
+      <div class="item" draggable="true">Cherries</div>
+      <div class="item" draggable="true">Watermelon</div>
+    </div>
+
+    <div class="bucket" id="Most Critical">Most Critical</div>
+    <div class="bucket" id="Critical">Critical</div>
+    <div class="bucket" id="Neutral">Neutral</div>
+    <div class="bucket" id="Somewhat Critical">Somewhat Critical</div>
+    <div class="bucket" id="Not Critical">Not Critical</div>
+  </div>
+
+  <button onclick="submitForm()">Submit</button>
+
+  <script>
+    const items = document.querySelectorAll('.item');
+    const buckets = document.querySelectorAll('.bucket');
+
+    items.forEach(item => {
+      item.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', item.textContent);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+    });
+
+    buckets.forEach(bucket => {
+      bucket.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+
+      bucket.addEventListener('drop', e => {
+        e.preventDefault();
+        const data = e.dataTransfer.getData('text/plain');
+        const item = [...document.querySelectorAll('.item')].find(i => i.textContent === data);
+
+        if (bucket.querySelectorAll('.item').length < 2) {
+          bucket.appendChild(item);
+        } else {
+          alert('Only 2 items allowed per category.');
+        }
+      });
+    });
+
+    function submitForm() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      if (!name || !email) {
+        alert('Please enter your name and email.');
+        return;
+      }
+
+      const result = {
+        name,
+        email,
+        categories: {}
+      };
+
+      buckets.forEach(bucket => {
+        const items = [...bucket.querySelectorAll('.item')].map(i => i.textContent);
+        result.categories[bucket.id] = items;
+      });
+
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbzZF9kxD-XoZod_cj96Q8ORlpo7WWJJMUrl3qvBPNiNaVlGNJJRGeMykm0a0puknEj3/exec';
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(result),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.text())
+      .then(text => {
+        console.log('Server response:', text);
+        alert('Response from server: ' + text);
+      })
+      .catch(error => {
+        console.error('Error submitting form:', error);
+        alert('Error submitting form: ' + error.message);
+      });
+    }
+  </script>
+</body>
+</html>
