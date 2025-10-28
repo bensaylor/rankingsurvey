@@ -1,136 +1,222 @@
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Item Ranking Survey</title>
-  <style>
+<meta charset="utf-8"/>
+<title>VRU Location Prioritization</title>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js">
+    // Save progress to localStorage
+    function saveProgress() {
+      const data = {
+        name: document.getElementById('userName').value,
+        email: document.getElementById('userEmail').value,
+        buckets: []
+      };
+      for (let i = 0; i < 5; i++) {
+        const bucket = document.getElementById(`bucket${i + 1}`);
+        const items = bucket.querySelectorAll('.item');
+        const itemTexts = Array.from(items).map(item => item.textContent);
+        data.buckets.push(itemTexts);
+      }
+      localStorage.setItem('bucketSorterData', JSON.stringify(data));
+    }
+
+    // Restore progress from localStorage
+    function restoreProgress() {
+      const saved = localStorage.getItem('bucketSorterData');
+      if (!saved) return;
+      const data = JSON.parse(saved);
+      document.getElementById('userName').value = data.name || '';
+      document.getElementById('userEmail').value = data.email || '';
+      const itemList = document.getElementById('itemList');
+      const allItems = Array.from(itemList.querySelectorAll('.item')).map(item => item.textContent);
+      const usedItems = new Set(data.buckets.flat());
+      const unusedItems = allItems.filter(item => !usedItems.has(item));
+      itemList.innerHTML = '<h3>Items</h3>' + unusedItems.map(text => `<div class="item">${text}</div>`).join('');
+      for (let i = 0; i < 5; i++) {
+        const bucket = document.getElementById(`bucket${i + 1}`);
+        bucket.innerHTML = `<h3>Bucket ${i + 1}</h3>` + data.buckets[i].map(text => `<div class="item">${text}</div>`).join('');
+      }
+    }
+
+    window.addEventListener('beforeunload', saveProgress);
+    window.addEventListener('load', restoreProgress);
+
+</script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    h2 {
-      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 20px;
     }
     .container {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: row;
       gap: 20px;
     }
-    .bucket, .items {
-      border: 2px dashed #ccc;
+    .list, .bucket {
+      border: 1px solid #ccc;
+      border-radius: 5px;
       padding: 10px;
-      width: 200px;
-      min-height: 100px;
+      min-height: 300px;
+      width: 150px;
       background-color: #f9f9f9;
     }
-    .bucket {
-      flex-grow: 1;
+    .bucket h3, .list h3 {
+      text-align: center;
+      margin-top: 0;
     }
     .item {
-      padding: 5px;
-      margin: 5px;
-      background-color: #e0e0ff;
+      padding: 5px 10px;
+      margin: 5px 0;
+      background-color: #e0e0e0;
+      border-radius: 3px;
       cursor: grab;
     }
-    input, button {
-      margin-top: 10px;
-      padding: 8px;
-      width: 300px;
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      align-self: flex-start;
     }
   </style>
 </head>
 <body>
 
-  <h1>Item Ranking Survey</h1>
-  <label>Name: <input type="text" id="name" required></label><br>
-  <label>Email: <input type="email" id="email" required></label>
 
-  <h2>Drag items into the appropriate category (max 2 per category)</h2>
-  <div class="container">
-    <div class="items" id="items">
-      <div class="item" draggable="true">Apples</div>
-      <div class="item" draggable="true">Bananas</div>
-      <div class="item" draggable="true">Oranges</div>
-      <div class="item" draggable="true">Pears</div>
-      <div class="item" draggable="true">Cherries</div>
-      <div class="item" draggable="true">Watermelon</div>
-    </div>
+<div class="container">
+<div class="list" id="itemList">
+<h3>Locations</h3>
 
-    <div class="bucket" id="Most Critical">Most Critical</div>
-    <div class="bucket" id="Critical">Critical</div>
-    <div class="bucket" id="Neutral">Neutral</div>
-    <div class="bucket" id="Somewhat Critical">Somewhat Critical</div>
-    <div class="bucket" id="Not Critical">Not Critical</div>
-  </div>
 
-  <button onclick="submitForm()">Submit</button>
-
-  <script>
-    const items = document.querySelectorAll('.item');
-    const buckets = document.querySelectorAll('.bucket');
-
-    items.forEach(item => {
-      item.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('text/plain', item.textContent);
-        e.dataTransfer.effectAllowed = 'move';
+<div class="item">1.1 Versailles Rd & Alexandria Dr
+</div><div class="item">1.2 Versailles Rd & Village Dr
+</div><div class="item">1.3 Versailles Rd & Mason Headley Rd
+</div><div class="item">1.4 Versailles Rd & Hamilton Park/ Terrace View
+</div><div class="item">1.5 Versailles Rd & Christian Towers
+</div><div class="item">1.6 Versailles Rd & Delmont Dr
+</div><div class="item">2.1 Versailles Rd & Forbes Rd
+</div><div class="item">2.2 Versailles Rd & Oliver Lewis Way
+</div><div class="item">2.3 High St & Broadway
+</div><div class="item">2.5 Main St & Newtown Pike
+</div><div class="item">2.6 Oliver Lewis Way & Manchester St
+</div><div class="item">3.1 Richmond Rd & Shriners Ln
+</div><div class="item">3.2 Richmond Rd & St Margaret Dr
+</div><div class="item">3.3 Richmond Rd & St Ann Rd
+</div><div class="item">3.4 Richmond Rd & Life Ln
+</div><div class="item">3.5 Richmond Rd & New Circle (Inner Loop)
+</div><div class="item">3.6 Richmond Rd & New Circle (Outer Loop)
+</div><div class="item">4.1 Richmond Rd & Richmond Plaza
+</div><div class="item">4.2 Richmond Rd & Old Todds Rd
+</div><div class="item">4.3 Richmond Rd & Midblock - Old Todds/ Mt Tabor Rd
+</div><div class="item">4.4 Richmond Rd & Mt Tabor Rd
+</div><div class="item">4.5 Richmond Rd & Locust Hill Dr
+</div><div class="item">4.6 Richmond Rd & Eagle Creek Dr
+</div><div class="item">4.7 Man O War & Palumbo Dr
+</div><div class="item">5.1 Winchester Rd & Walton Ave
+</div><div class="item">5.2 Winchester Rd & Delaware Ave
+</div><div class="item">5.3 Winchester Rd & E 7th St/ Liberty Rd
+</div><div class="item">5.4 Winchester Rd & E Loudon Ave
+</div><div class="item">5.6 Winchester Rd & Ashton Dr
+</div><div class="item">5.7 Winchester Rd & Eastland Pkwy
+</div><div class="item">6.1 Newtown Pike & Third St
+</div><div class="item">6.2 Newtown Pike & Fourth St
+</div><div class="item">6.3 Newtown Pike & Imperial Pike
+</div><div class="item">6.4 Georgetown Rd & New Circle (Outer Loop)
+</div><div class="item">6.5 Georgetown Rd & New Circle (Inner Loop)
+</div><div class="item">6.6 Georgetown Rd & Lima Dr
+</div><div class="item">6.7 Georgetown Rd & Georgetown Place
+</div><div class="item">7.1 Nicholasville Rd & Surfside Dr
+</div><div class="item">7.2 Nicholasville Rd & Pasadena Dr
+</div><div class="item">7.3 Nicholasville Rd & Lowry Ln
+</div><div class="item">7.4 Nicholasville Rd & Burt Rd
+</div><div class="item">7.5 Nicholasville Rd & Zandale Dr
+</div><div class="item">7.6 Nicholasville Rd & Southland Dr
+</div><div class="item">7.7 Nicholasville Rd & Rosemont Garden
+</div><div class="item">7.8 Nicholasville Rd & Baptist Health
+</div><div class="item">8.1 Tates Creek Rd & Dove Run Rd
+</div><div class="item">8.2 Tates Creek Rd & Malabu Dr
+</div><div class="item">8.3 Tates Creek Rd & Gainsway Dr
+</div><div class="item">8.4 Tates Creek Rd & Armstrong Mill Rd
+</div><div class="item">8.5 Tates Creek Rd & Laredo Dr
+</div><div class="item">8.6 Tates Creek Rd & Wilson Downing Rd
+</div><div class="item">8.7 Tates Creek Rd & Man O' War Blvd
+</div><div class="item">9.1 N Broadway & 3rd St
+</div><div class="item">9.2 N Broadway & 4th St
+</div><div class="item">9.3 N Broadway & Delcamp Dr
+</div><div class="item">9.4 N Broadway & Morrison Ave
+</div><div class="item">9.5 N Broadway & Granard Ave
+</div><div class="item">9.6 N Broadway & Loudon Ave
+</div><div class="item">9.7 N Broadway & 12th St
+</div><div class="item">9.8 N Broadway & New Circle
+</div><div class="item">9.9 N Broadway & Cane Run Rd
+</div><div class="item">11.1 N Broadway & 2nd St
+</div><div class="item">11.2 N Broadway & Short St
+</div><div class="item">11.3 N Broadway & Main St
+</div><div class="item">11.4 N Broadway & Vine St
+</div><div class="item">11.6 Vine St & S Upper St
+</div><div class="item">11.7 Main St & Limestone
+</div><div class="item">12.1 S Limestone & Conn Terrace
+</div><div class="item">12.2 S Limestone & Virginia
+</div><div class="item">12.3 Virginia & Press Ave
+</div><div class="item">12.4 S Limestone & Prall St
+</div><div class="item">12.5 S Limestone & Pine St
+</div><div class="item">12.6 Maxwell St & MLK Blvd
+</div><div class="item">12.7 Rose St & Maxwell St
+</div><div class="item">12.8 Rose St & Euclid Ave
+</div></div>
+<div id="buckets" style="display: flex; gap: 10px;">
+<div class="bucket" id="bucket1"><h3>Highest Priority</h3></div>
+<div class="bucket" id="bucket2"><h3>High Priority</h3></div>
+<div class="bucket" id="bucket3"><h3>Standard Priority</h3></div>
+<div class="bucket" id="bucket4"><h3>Low Priority</h3></div>
+<div class="bucket" id="bucket5"><h3>Lowest Priority</h3></div>
+</div>
+</div>
+<button onclick="downloadSpreadsheet()">Download Spreadsheet</button>
+<script>
+    const lists = ['itemList', 'bucket1', 'bucket2', 'bucket3', 'bucket4', 'bucket5'];
+    lists.forEach(id => {
+      new Sortable(document.getElementById(id), {
+        onAdd: function (evt) {
+          const bucket = evt.to;
+          if (bucket.classList.contains('bucket') && bucket.querySelectorAll('.item').length > 15) {
+            evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+            alert('Each priority list can only hold up to 15 locations.');
+          }
+        },
+        group: 'shared',
+        animation: 150
       });
     });
 
-    buckets.forEach(bucket => {
-      bucket.addEventListener('dragover', e => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-      });
-
-      bucket.addEventListener('drop', e => {
-        e.preventDefault();
-        const data = e.dataTransfer.getData('text/plain');
-        const item = [...document.querySelectorAll('.item')].find(i => i.textContent === data);
-
-        if (bucket.querySelectorAll('.item').length < 2) {
-          bucket.appendChild(item);
-        } else {
-          alert('Only 2 items allowed per category.');
-        }
-      });
-    });
-
-    function submitForm() {
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-
-      if (!name || !email) {
-        alert('Please enter your name and email.');
-        return;
+    function downloadSpreadsheet() {
+      const data = [[], [], [], [], []];
+      for (let i = 0; i < 5; i++) {
+        const bucket = document.getElementById(`bucket${i + 1}`);
+        const items = bucket.querySelectorAll('.item');
+        items.forEach(item => data[i].push(item.textContent));
       }
 
-      const result = {
-        name,
-        email,
-        categories: {}
-      };
+      const maxLength = Math.max(...data.map(col => col.length));
+      const worksheetData = [];
+      for (let i = 0; i < maxLength; i++) {
+        worksheetData.push([
+          data[0][i] || '',
+          data[1][i] || '',
+          data[2][i] || '',
+          data[3][i] || '',
+          data[4][i] || ''
+        ]);
+      }
 
-      buckets.forEach(bucket => {
-        const items = [...bucket.querySelectorAll('.item')].map(i => i.textContent);
-        result.categories[bucket.id] = items;
-      });
-
-      fetch(https://script.google.com/macros/s/AKfycbwbp8szQ4JYbDh_wTJ9NtxdSCbcoRx0w4ybO7DHAV5QqHKWhEY9xGrga5gNlhQTQcbp/exec, {
-        method: 'POST',
-        body: JSON.stringify(result),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => response.text())
-      .then(text => {
-        console.log('Server response:', text);
-        alert('Response from server: ' + text);
-      })
-      .catch(error => {
-        console.error('Error submitting form:', error);
-        alert('Error submitting form: ' + error.message);
-      });
+      const worksheet = XLSX.utils.aoa_to_sheet([['Highest Priority', 'High Priority', 'Standard Priority', 'Low Priority', 'Lowest Priority'], ...worksheetData]);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Buckets');
+      XLSX.writeFile(workbook, 'VRU_Locations.xlsx');
     }
   </script>
 </body>
